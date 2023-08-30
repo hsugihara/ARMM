@@ -10,7 +10,7 @@ ARMMには外付け型と内蔵型の2種類があります。ARMMの詳細は�
 
 こちらは、Edge AI BOXを監視し、ARMMとシリアル通信を行う、Edge AI BOXにて実行するサンプルプログラムになります。
 
-## 　サンプルプログラム説明
+## サンプルプログラム説明
 以下の状態線図は本サンプルプログラムの状態線図になります。
 この状態遷移はBT-SerialCommunication.pyにて使用しています。
 ![state disgram of host sample program](./host-statediagram.png)
@@ -36,7 +36,7 @@ bt-11フォルダは Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”
 - bt_id.txt
   - 本プログラムがどのEdge AI Boxに組み込まれたのかを識別するIDファイル。ユーザーが自由に内容を設定できます。
 
-### Edge AI Box への導入手順
+## Edge AI Box への導入手順
 - bt-01フォルダ内、およびbt-11フォルダ内のREADME.mdにも同様の説明があります。
 - Edge AI BOXに nvidia でlogin します。
 - pipをインストールします。
