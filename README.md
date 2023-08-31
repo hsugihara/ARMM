@@ -91,6 +91,8 @@ Python tkinter を用いたGUIベースのARMMシリアルコマンドを試験�
 
 本プログラムは、MacbookAirと外付け型ARMM(bt-01)をシリアルケーブルで接続して試験しました。EDGEMATRIX社のEX5での利用では、/dev/ttyTHS0を使って内蔵型ARMM(bt-11)とシリアル通信しますので、console_UI.py内の/dev/tty記述を変更します。
 
+また、/dev/ttyにアクセスするために dialoutグループにnvidia(アカウント)を追加しておきます。
+
 各プログラムについて説明します。
 
 - main.py
