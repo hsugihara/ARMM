@@ -8,14 +8,20 @@ ARMMは32ビットMCUを内蔵した超小型ボードで、EDGEMATRIX Inc.が�
 
 ARMMには外付け型と内蔵型の2種類があります。ARMMの詳細は別資料を参照してください。
 
-こちらは、Edge AI BOXを監視し、ARMMとシリアル通信を行う、Edge AI BOXにて実行するサンプルプログラムになります。
+ここには2種類のプログラムがあります。
+ - bt-01フォルダ および bt-11フォルダにあるホスト側サンプルプログラム
+ - TestCommandsフォルダにあるシリアル通信コマンド試験用プログラム
+
+以下に各々を説明します。
 
 ## サンプルプログラム説明
+Edge AI BOXを監視し、ARMMとシリアル通信を行う、Edge AI BOXにて実行するサンプルプログラムになります。
+
 以下の状態線図は本サンプルプログラムの状態線図になります。
 この状態遷移はBT-SerialCommunication.pyにて使用しています。
 ![state disgram of host sample program](./host-statediagram.png)
 
-本フォルダには bt-01フォルダ と bt-11フォルダがあります。
+本フォルダにはサンプルプログラムとして bt-01フォルダ と bt-11フォルダがあります。
 bt-01フォルダは Jetpack4.4 Python3.6 にて動作確認した”外付け”ARMM用ファイルになります。
 bt-11フォルダは Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”ARMM用ファイルです。
 
@@ -36,7 +42,7 @@ bt-11フォルダは Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”
 - bt_id.txt
   - 本プログラムがどのEdge AI Boxに組み込まれたのかを識別するIDファイル。ユーザーが自由に内容を設定できます。
 
-## Edge AI Box への導入手順
+### Edge AI Box への導入手順
 - bt-01フォルダ内、およびbt-11フォルダ内のREADME.mdにも同様の説明があります。
 - Edge AI BOXに nvidia でlogin します。
 - pipをインストールします。
@@ -77,5 +83,21 @@ bt-11フォルダは Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”
   - to@tosample.com : メールの送信先。
   - /home/nvidia/bt-01 に移動して本コマンドを実行します。
   - 実行例：$./send_bt-logs.sh tx@sample1.com 1111222233334444 rx@sample2.com
+
+## 試験プログラム
+Python tkinter を用いたGUIベースのARMMシリアルコマンドを試験するプログラムです。事前にtkinter, pyserial(serial)などをinstallします。main.pyを実行する(例 $python3 main.py)と起動します。ただし、ARMMの電源が入って、シリアル通信準備(/dev/ttyがopen)ができるまで、プログラムが待ちますので注意が必要です。
+
+コマンドは内蔵型ARMMで使用するコマンドを全て網羅しています。外付け型ARMMはサブセットなので外付け型にも使えます。
+
+本プログラムは、MacbookAirと外付け型ARMM(bt-01)をシリアルケーブルで接続して試験しました。EDGEMATRIX社のEX5での利用では、/dev/ttyTHS0を使って内蔵型ARMM(bt-11)とシリアル通信しますので、console_UI.py内の/dev/tty記述を変更します。
+
+各プログラムについて説明します。
+
+- main.py
+  - mainプログラム。これを実行します。
+- console_UI.py
+  - GUI表示とボタン押下時の動作などを行うクラス
+- btSerial.py
+  - シリアル通信クラス
 
 End Of Doc 2023/08/30
