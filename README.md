@@ -86,7 +86,7 @@ bt-11フォルダは Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”
 
 ## 試験プログラム
 Python tkinter を用いたGUIベースのARMMシリアルコマンドを試験するプログラムです。事前にtkinter, pyserial(serial)などをinstallします。main.pyを実行する(例 $python3 main.py)と起動します。ただし、ARMMの電源が入って、シリアル通信準備(/dev/ttyがopen)ができるまで、プログラムが待ちますので注意が必要です。
-![GUI表示](./GUI.png)
+![GUI screen](./GUI.png)
 
 コマンドは内蔵型ARMMで使用するコマンドを全て網羅しています。外付け型ARMMはサブセットなので外付け型にも使えます。
 
