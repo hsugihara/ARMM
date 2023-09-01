@@ -1,0 +1,13 @@
+[Unit]
+Description=start bt-01 serial communication & AI BOX watchdog
+After=network.target
+
+[Service]
+ExecStart=/home/nvidia/bt-01/start_bt.sh
+WorkingDirectory=/home/nvidia/bt-01
+Environment=LD_LIBRARY_PATH=/usr/local/lib
+Environment=PYTHONPATH=/home/nvidia/.local/lib/python3.6/site-packages:$PYTHONPATH
+
+
+[Install]
+WantedBy=multi-user.target
