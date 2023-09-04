@@ -22,7 +22,7 @@ Edge AI BOXを監視し、ARMMとシリアル通信を行う、Edge AI BOXにて
 
 以下の状態線図は本サンプルプログラムの状態線図になります。
 この状態遷移はBT-SerialCommunication.pyにて使用しています。
-![state disgram of host sample program](./host-statediagram.png)
+![state disgram of host sample program](./host-statediagram-sample.png)
 
 本フォルダにはサンプルプログラムとして bt-01フォルダ と bt-11フォルダがあります。
 bt-01フォルダは Jetpack4.4 Python3.6 にて動作確認した”外付け”ARMM用ファイルになります。
