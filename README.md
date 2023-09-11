@@ -100,7 +100,7 @@ EX3/EX5 キャリアボードには以下の2種類の電源制御機能が備�
 詳細はアプリケーションノートを参照してください。
 
 ## 試験プログラム
-Python tkinter を用いたGUIベースのARMMシリアルコマンドを試験するプログラムです。事前にtkinter, pyserial(serial)などをinstallします。main.pyを実行する(例 $python3 main.py)と起動します。ただし、ARMMの電源が入って、シリアル通信準備(/dev/ttyがopen)ができるまで、プログラムが待ちますので注意が必要です。
+Python tkinter を用いたGUIベースのARMMシリアルコマンドを試験するプログラムです。事前にpyserial(serial)などをinstallします。main.pyを実行する(例 $python3 main.py)と起動します。ただし、ARMMの電源が入って、シリアル通信準備(/dev/ttyがopen)ができるまで、プログラムが待ちますので注意が必要です。
 ![GUI screen](./GUI.png)
 
 コマンドは内蔵型ARMMで使用するコマンドを全て網羅しています。外付け型ARMMはサブセットなので外付け型にも使えます。
