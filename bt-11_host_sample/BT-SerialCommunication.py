@@ -48,8 +48,8 @@ CMD_UNKNOWN_RES = bytearray([0xFF])     # B2A/A2B   : Received unknown command
 # Serial communication parameters
 #
 # FIXME: set /dev/tty
-DEVTTYNAME = '/dev/ttyTHS0'   # Serial Port tty
-BAUDRATE = '115200'           # Serial Port Baud Rate
+DEVTTYNAME = "/dev/ttyTHS0"   # Serial Port tty
+BAUDRATE = 1200           # Serial Port Baud Rate
 
 #
 # Logging
@@ -133,7 +133,7 @@ def shiftlogfile():
 # AI BOX Serial Communication Class to BT-01
 #
 class BtComm(object):
-    def __init__(self, tty, baudrate, timeoutvalue=0.1):
+    def __init__(self, tty, baudratevalue, timeoutvalue=0.1):
         # port open flag
         self.isPortOpen = False
         # Rx
@@ -147,7 +147,14 @@ class BtComm(object):
         # Open Serial Port. wait for success
         while True:
             try:
-                self.comm = serial.Serial(tty, baudrate, timeout=timeoutvalue)
+                self.comm = serial.Serial(
+                    port=tty, 
+                    baudrate=baudratevalue, 
+                    bytesize=serial.EIGHTBITS,
+                    parity=serial.PARITY_NONE,
+                    stopbits=serial.STOPBITS_ONE,
+                    timeout=timeoutvalue
+                    )
                 self.isPortOpen = True
                 break
             except serial.SerialException:
@@ -194,76 +201,100 @@ class BtComm(object):
         if result:
             # DEBUG
             print('self.recvData = ', self.recvData)
+            print('self.recvData = ', self.recvData.hex())
 
             # write recvData as log
             strlog = 'self.recvData = ' + str(self.recvData)
+            writelog(strlog)
+            strlog = 'self.recvData = ' + str(self.recvData.hex())
             writelog(strlog)
 
             #
             # here, process checksum, 0x10 escape process, & discriminating the command
             #
+            
             # received command
             self.recvCommand = self.recvData[2]
             # extract data for checksum
-            recvdataforchecksum = self.recvData[2:-3]
+            # recvdataforchecksum = self.recvData[2:-3]
             # extract payload for 0x10 escape sequence
-            recvdataforescapesequence = self.recvData[3:-3]
+            self.recvdataforescapesequence = self.recvData[2:-3]
             # received data checksum
             self.recvChecksumByte = self.recvData[-3]
-            # check checksum
-            num_sum = 0
-            for num in recvdataforchecksum:
-                num_sum += num
-            checksumbyte = num_sum & 0xFF
-            if checksumbyte == self.recvChecksumByte:
-                logging.debug("received data check sum is correct")
-            else:
-                logging.debug("received data check sum is not correct")
-            # send CMD_UNKNOWN_RES
-            # not need now
-
-            # retrieve 0x10 from escape sequence
+            # extract escape sequence 0x10
             self.afterEscapeSequence = bytearray()
+            self.afterEscapeSequence.clear()
             pnum = 0  # non 0x10
-            for num in recvdataforescapesequence:
-                if pnum == 16 & num == 16:
+            for num in self.recvdataforescapesequence:
+                if pnum == 0x10 & num == 0x10:
                     pnum = 0
                     continue
                 else:
                     pnum = num
                     self.afterEscapeSequence.append(num)
-            # print("afterEscapeSequence = ", afterEscapeSequence)
+            
+            print("self.afterEscapeSequence = ", self.afterEscapeSequence)
+            
+
+
+            # check checksum
+            num_sum = 0
+            for num in self.afterEscapeSequence:
+                num_sum += num
+            checksumbyte = num_sum & 0xFF
+            
+            print("checksumbyte = ", hex(checksumbyte))
+            print("self.recvChecksumByte = ", hex(self.recvChecksumByte))
+
+            if checksumbyte == self.recvChecksumByte:
+                logging.debug("received data check sum is correct")
+                print("received data check sum is correct")
+            else:
+                logging.debug("received data check sum is not correct")
+                print("received data check sum is not correct")
+            # send CMD_UNKNOWN_RES
+            # not need now
+
+            
 
         return result, self.recvData, self.recvCommand, self.afterEscapeSequence
 
     # Send Data
     def send(self, data):
-        # check 0x10 escape
-        sendbytearray = bytearray()
-        sendbytearray.clear()
-        for i in data:
-            sendbytearray.append(i)
-            if i == 0x10:  # 0x10 escape required ?
-                sendbytearray.append(i)  # yes
-
-        # Add DLE+STX, checkSum, DLE+ETX
-        #  calculate check sum
+        # check sum
+        sendbytesnoescape = bytearray()
+        sendbytesnoescape.clear()
         num_sum = 0
-        for i in sendbytearray:
+        for i in data:
             num_sum = num_sum + i
-        sumbyte = num_sum & 0xFF  # extract only lowest byte
-        csum = bytearray([sumbyte])
-        #  make a command
-        senddata = DLE + STX + sendbytearray + csum + DLE + ETX
+            sendbytesnoescape.append(i)
+        csum = num_sum & 0xFF       # extract only lowest byte
+        sendbytesnoescape.append(csum)
+        
+        # 0x10 escape
+        sendbytesescape = bytearray()
+        sendbytesescape.clear()
+        for i in sendbytesnoescape:
+            sendbytesescape.append(i)
+            if i == 0x10:
+                sendbytesescape.append(i)
+        senddata = DLE + STX + sendbytesescape + DLE + ETX
+
 
         try:
             self.comm.write(senddata)
             self.isPortOpen = True
             # DEBUG
             print('senddata = ', senddata)
+            print('senddata = ', senddata.hex())
 
             strlog = 'self.senddata = ' + str(senddata)
             writelog(strlog)
+            strlog = 'self.senddata = ' + str(senddata.hex())
+            writelog(strlog)
+            
+
+
 
         except serial.SerialException:
             self.isPortOpen = False
@@ -418,8 +449,8 @@ def main():
     #
     # just wait for system up and running
     #
-    logging.info('program started.  wait for 1 minutes for system up')
-    time.sleep(60)
+    logging.info('program started.  wait for 15 seconds for system up')
+    time.sleep(15)
 
     #
     # start main loop of state machine
@@ -641,7 +672,7 @@ def main():
                 # data received ?
                 if result:
                     # alive_res ?
-                    if rxdata == b'\x10\x02UU\x10\x03':
+                    if rxdata == b'\x10\x02\xaa\xaa\x10\x03':
                         # yes
                         break
 
