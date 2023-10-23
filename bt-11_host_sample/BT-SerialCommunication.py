@@ -14,13 +14,13 @@ import serial
 
 # State
 STATE_POWERON = 0       # Power on
-STATE_WAIT4BT01 = 1     # Wait for BT-01 is alive
+STATE_WAIT4BT11 = 1     # Wait for BT-11 is alive
 STATE_HEARTBEAT = 2     # Normal State
-STATE_BT_DEAD = 3       # BT-01 no response
+STATE_BT_DEAD = 3       # BT-11 no response
 
 # Commands
-# A2B : AIBOX to BT-01
-# B2A : BT-01 to AIBOX
+# A2B : AIBOX to BT-11
+# B2A : BT-11 to AIBOX
 # format : <DLE><STX>[command1byte][parameter0～128byte][checksum1byte]<DLE><ETX>
 # checksum : sum (lowest 8 bit) of command & parameter
 # if 0x10 appears in command & parameter, add 0x10 just after 0x10 as escape of <DLE>
@@ -30,7 +30,7 @@ ETX = bytearray([0x03])
 
 CMD_ALIVE_REQ = bytearray([0x55])       # A2B   : Notice AI BOX is alive
 CMD_ALIVE_RES = bytearray([0xAA])       # B2A   : Response to alive_req
-CMD_STATUS_REQ = bytearray([0x01])      # A2B   : Status request to BT-01
+CMD_STATUS_REQ = bytearray([0x01])      # A2B   : Status request to BT-11
 CMD_STATUS_RES = bytearray([0x81])      # B2A   : Status response (Contents TBD)
 CMD_TIME_SYNC_REQ = bytearray([0x02])   # A2B   : Sync Data & Time
 CMD_TIME_SYNC_RES = bytearray([0x82])   # B2A   : Response to Sync req (return Data & Time)
@@ -92,7 +92,7 @@ def print_info(func):
 # write log(print) to BT log file
 def writelog(strlog):
     f = open(loggingFileName, 'a')
-    strbytes = 'BT01 DEBUG: ' + str(datetime.datetime.now()) + strlog + '\n'
+    strbytes = 'BT11 DEBUG: ' + str(datetime.datetime.now()) + strlog + '\n'
     # print(strbytes)
     f.write(strbytes)
     f.close()
@@ -130,7 +130,7 @@ def shiftlogfile():
 
 
 #
-# AI BOX Serial Communication Class to BT-01
+# AI BOX Serial Communication Class to BT-11
 #
 class BtComm(object):
     def __init__(self, tty, baudratevalue, timeoutvalue=0.1):
@@ -313,7 +313,7 @@ class BtComm(object):
             self.comm.close()
         self.isPortOpen = False
 
-    # TODO: read BT-01 status -> need to define status(parameters)
+    # read BT-11 status -> need to define status(parameters)
     def readstatus(self):
         # send status_req
         logging.debug("send status request")
@@ -354,7 +354,7 @@ class BtComm(object):
         else:
             result, rxdata, rxcommand, rxparameter = self.recv(30)
             if result:
-                logging.debug("received BT-01 RTC response")
+                logging.debug("received BT-11 RTC response")
                 print("RxParameter (RTC) = ", rxparameter)
             else:
                 logging.debug("not received RTC sync response")
@@ -363,7 +363,7 @@ class BtComm(object):
     # @print_info
     # @print_more
     def readlogs(self):
-        logging.debug("send bt01 log request")
+        logging.debug("send BT11 log request")
         print(str(datetime.datetime.now()) + " Read Logs starts")
         while True:
             result = BtComm.send(self, CMD_LOG_REQ)
@@ -373,11 +373,11 @@ class BtComm(object):
             else:
                 result, rxdata, rxcommand, rxparameter = self.recv(30)
                 if result:
-                    logging.debug("received BT-01 log")
+                    logging.debug("received BT-11 log")
                     print("RxParameter (log) = ", rxparameter)
 
                     f = open(loggingFileName, 'a')
-                    strbytes = 'BT01 LOG: ' + str(rxparameter) + '\n'
+                    strbytes = 'BT11 LOG: ' + str(rxparameter) + '\n'
                     print(strbytes)
                     f.write(strbytes)
                     f.close()
@@ -389,8 +389,8 @@ class BtComm(object):
                         time.sleep(1)
 
                 else:
-                    logging.debug("not received BT-01 log")
-                    print("not received BT-01 log")
+                    logging.debug("not received BT-11 log")
+                    print("not received BT-11 log")
         return result
 
     # cold boot request
@@ -458,14 +458,14 @@ def main():
     while True:
         if state == STATE_POWERON:
             # DEBUG
-            print('Start Shift from POWERON to WAIT4BT01')
+            print('Start Shift from POWERON to WAIT4BT11')
 
-            # Shift to STATE:01 "BT-01確認待機"
-            state = STATE_WAIT4BT01  # Current STATE: 01
-            logging.info('state = STATE_WAIT4BT01')
+            # Shift to STATE:01 "BT-11確認待機"
+            state = STATE_WAIT4BT11  # Current STATE: 01
+            logging.info('state = STATE_WAIT4BT11')
             pstate = STATE_POWERON  # Previous STATE: 00
 
-        elif state == STATE_WAIT4BT01:
+        elif state == STATE_WAIT4BT11:
             # STATE:01 処理
             # Start to send "alive_req" & wait for alive_res
             #   write log "start to send 'alive_req'"
@@ -483,7 +483,7 @@ def main():
                     # alive_res ?
                     if rxdata == b'\x10\x02\xaa\xaa\x10\x03':
                         # yes
-                        print('Received alive_res, BT01 is alive.')
+                        print('Received alive_res, BT11 is alive.')
                         break
 
                 # just sleep 5 sec. (should be 60 sec.)
@@ -492,16 +492,16 @@ def main():
             # shift to next state
             state = STATE_HEARTBEAT
             logging.info('state = STATE_HEARTBEAT')
-            pstate = STATE_WAIT4BT01
+            pstate = STATE_WAIT4BT11
 
         elif state == STATE_HEARTBEAT:
             # first time to come ? (Entering Process ?)
-            if pstate == STATE_WAIT4BT01:
+            if pstate == STATE_WAIT4BT11:
                 pstate = STATE_HEARTBEAT
                 # DEBUG
                 print('Start SP from WAIT4BT01 to HEARTBEAT')
 
-                # read BT-01 status
+                # read BT-11 status
                 logging.debug("send status request")
                 result = btcom.send(CMD_STATUS_REQ)
                 if result:
@@ -533,7 +533,7 @@ def main():
                 # DEBUG
                 print('Start SP from BT_DEAD to HEARTBEAT')
 
-                # read BT-01 status
+                # read BT-11 status
                 logging.debug("send status request")
                 result = btcom.send(CMD_STATUS_REQ)
                 if result:
@@ -583,8 +583,8 @@ def main():
                         logging.info('Due to serial communication error, shift to state = SATE_POWERON')
                         continue
 
-                    #  wait for alive_res w/ 10 sec. time out
-                    result, rxdata, rxcommand, rxparameter = btcom.recv(10)
+                    #  wait for alive_res w/ 15 sec. time out
+                    result, rxdata, rxcommand, rxparameter = btcom.recv(15)
                     # data received ?
                     if result:
                         # alive_res ?
@@ -606,12 +606,13 @@ def main():
 
                     else:
                         # Not received 'alive_res' in 10 sec.
-                        state = STATE_BT_DEAD
-                        logging.info('state = STATE_BT_DEAD')
-                        pstate = STATE_HEARTBEAT
+                        # state = STATE_BT_DEAD
+                        # logging.info('state = STATE_BT_DEAD')
+                        logging.info('NOT received BT-11 HEARTBEAT Response')
+                        # pstate = STATE_HEARTBEAT
                         # DEBUG
-                        print('NOT received BT01 HEARTBEAT Response')
-                        break
+                        print('NOT received BT-11 HEARTBEAT Response')
+
 
                 #
                 # if LTE is not working, send reboot_req & wait for reboot_res
@@ -656,6 +657,7 @@ def main():
                 schedule.run_pending()
 
         else:
+            # Not comming here in this program
             # STATE:03 STATE_BT_DEAD
             # every 5 min, send alive_req and wait for alive_res
             while True:
