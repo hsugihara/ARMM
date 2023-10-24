@@ -421,7 +421,7 @@ def main():
     #
     logging.info('=============================================')
     logging.info('AIBOX Program (re-)started : start log output')
-
+    logging.info('version: no STATE_BT_DEAD, heartbeat = every 5min.')
     ''' 
     logging message examples
     logging.critical('CRITICAL MESSAGE')
@@ -499,7 +499,7 @@ def main():
             if pstate == STATE_WAIT4BT11:
                 pstate = STATE_HEARTBEAT
                 # DEBUG
-                print('Start SP from WAIT4BT01 to HEARTBEAT')
+                print('Start SP from WAIT4BT11 to HEARTBEAT')
 
                 # read BT-11 status
                 logging.debug("send status request")
@@ -612,6 +612,11 @@ def main():
                         # pstate = STATE_HEARTBEAT
                         # DEBUG
                         print('NOT received BT-11 HEARTBEAT Response')
+
+                        # Clear Rx buffer & Tx buffer
+                        btcom.reset_input_buffer()
+                        btcom.reset_output_buffer()
+                        time.sleep(1)
 
 
                 #
