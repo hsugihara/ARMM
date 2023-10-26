@@ -55,10 +55,11 @@ class TestConsole(tk.Frame):
         #
         # Serial communication parameters
         #
-        # FIXME: set /dev/tty
-        # ttySerialPort = '/dev/ttyTHS0'   # Serial Port tty of Orin NX & nano UART1
-        self.ttySerialPort = '/dev/tty.usbmodem69A0933337381'  # mac tty serial port
-        self.serialBaudRate = "115200"
+        # set /dev/tty & baud rate (should be 1200 because of generating stable signal of bt-11)
+        self.ttySerialPort = '/dev/ttyTHS0'     # Serial Port tty of Orin NX & nano UART1
+        # self.ttySerialPort = '/dev/tty.usbmodem69A0933337381'     # mac tty serial port (example)
+        self.serialBaudRate = "1200"
+        # self.serialBaudrate = "115200"                            # mac baud rate to bt-01
 
         self.heartbeat_period = 4   # heartbeat period default : 5 min.
         self.heartbeat_millisecond = (self.heartbeat_period + 1) * 60 * 1000

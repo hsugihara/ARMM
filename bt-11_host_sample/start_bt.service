@@ -1,5 +1,5 @@
 [Unit]
-Description=start bt-11 serial communication & AI BOX watchdog
+Description=start bt-11 serial communication on UART1 ttyTHS0 & AI BOX internet watchdog
 After=network.target
 
 [Service]

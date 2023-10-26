@@ -29,6 +29,16 @@ sudo gpasswd -a nvidia dialout  # dialoutにnvidia追加
 reboot                          # 立ち上がってからdialoutにnvidiaを追加できたか確認する 
 id -a　　　                      # dialoutに追加されていればOK
 ```
+### ttyTHS0 の競合がないか、確認する
+- Jetson Orin NX/nanoのシリアル通信では UART1 がttyTHS0でgeneral purpose利用となっているが、nvgetty.serviceにて利用しているとメッセージが出る
+  - 動作とメッセージを確認する
+```
+  sudo systemctl status nvgetty.service
+```
+  - ttyTHS0の競合を避けるために以下のコマンドでdisableする。
+```
+sudo systemctl disable nvgetty.service
+```
 
 ### BT-SerialCommunication.py が問題なく動作するか試験をします
 ```
@@ -56,4 +66,4 @@ send_bt-logs.sh from_email_address from_email_app-password, to_email_address
 ```
 
 ### 以上
-(2023/08/30)
+(2023/10/26)

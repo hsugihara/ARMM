@@ -25,8 +25,8 @@ Edge AI BOXを監視し、ARMMとシリアル通信を行う、Edge AI BOXにて
 ![state disgram of host sample program](./host-statediagram-sample.png)
 
 本フォルダにはサンプルプログラムとして bt-01フォルダ と bt-11フォルダがあります。
-bt-01フォルダは Jetpack4.4 Python3.6 にて動作確認した”外付け”ARMM用ファイルになります。
-bt-11フォルダは Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”ARMM用ファイルです。
+bt-01フォルダは EDGEMATRIX社 Light (nano) Jetpack4.4 Python3.6 にて動作確認した”外付け”ARMM用ファイルになります。
+bt-11フォルダは EDGEMATRIX社 EX5/3 (Orin NX/nano) Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”ARMM用ファイルです。
 
 基本的に機能が同等のファイルが収められていますが、デバイス名(/dev/tty）やフォルダ名(bt-XX)が異なります。各ファイルの概要を以下に説明します。
 
@@ -60,6 +60,10 @@ bt-11フォルダは Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”
 - nvidiaでloginし、dialoutに追加できたか確認する
   - id -a
 
+- Jetson Orin NX/nanoのシリアル通信では UART1 がttyTHS0でgeneral purpose利用となっているが、nvgetty.serviceにて利用しているとメッセージが出る
+  - sudo systemctl status nvgetty.service にて動作とメッセージを確認できる
+  - ttyTHS0の競合を避けるために以下のコマンドでdisableする。
+  - sudo systemctl disable nvgetty.service
 - BT-SerialCommunication.py, start_bt.service, start_bt.shを~/bt-XX/下にコピーします。
   - scp例
     - 例えば自分のPCのフォルダに移動してscpコマンドを実行する。
@@ -67,7 +71,7 @@ bt-11フォルダは Jetpack5.1.1 Python3.8　にて動作確認した"内蔵”
 - python3 BT-SerialCommunication.py で試験。　まだservice 起動していない
 - 動作に問題ないようであれば自動起動設定
   - chmod u+x start_bt.shで実行できる様にする。（不要かもしれませんが）
-  - /etc/systemd/systemの下にサービスファイルをコピーし、次に以下のコマンドを実行する。
+  - /etc/systemd/systemの下にstart_bt.serviceをコピーし、次に以下のコマンドを実行する。
     - sudo systemctl enable start_bt.service
     - sudo systemctl start start_bt.service     （試しに起動してみる）
     - sudo systemctl status start_bt.service　　 （動作確認）
@@ -118,4 +122,4 @@ Python tkinter を用いたGUIベースのARMMシリアルコマンドを試験�
 - btSerial.py
   - シリアル通信クラス
 
-End Of Doc 2023/08/31
+End Of Doc 2023/10/26
