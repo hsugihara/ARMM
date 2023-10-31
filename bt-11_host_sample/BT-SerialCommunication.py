@@ -14,7 +14,7 @@ import serial
 
 # version description
 # described at logging.info at the beginning
-VERSIONDESCRIPTION = 'version 2023/10/25 : no STATE_BT_DEAD, heartbeat = every 5min.'
+VERSIONDESCRIPTION = 'version 2023/10/31 : no STATE_BT_DEAD, heartbeat = every 5min.'
 
 # State
 STATE_POWERON = 0       # Power on
@@ -41,8 +41,16 @@ CMD_LOG_REQ = bytearray([0x03])             # A2B   : LOG request
 CMD_LOG_RES = bytearray([0x83])             # B2A   : Response to LOG req (LOG format TBD)
 CMD_REBOOT_REQ = bytearray([0x04])          # A2B   : Cold reboot request
 CMD_REBOOT_RES = bytearray([0x84])          # B2A   : Response to reboot req
-CMD_POWEROFF_TIME_REQ = bytearray([0x05])   # A2B   : Power Off time setting request
-CMD_POWEROFF_TIME_RES = bytearray([0x85])   # B2A   : Response to Power Off time setting request
+CMD_POWEROFF_TIME_REQ = bytearray([0x05])       # A2B   : bt-11 Only : Power Off time setting request
+CMD_POWEROFF_TIME_RES = bytearray([0x85])       # B2A   : bt-11 Only : Response to Power Off time setting request
+CMD_HEARTBEAT_PERIOD_REQ = bytearray([0x06])    # A2B   : bt-11 Only : heartbeat period setting request
+CMD_HEARTBEAT_PERIOD_RES = bytearray([0x86])    # B2A   : bt-11 Only : Response to heartbeat period setting request
+CMD_POWER_BUTTON_REQ = bytearray([0x07])        # A2B   : bt-11 Only : press power button
+CMD_POWER_BUTTON_RES = bytearray([0x87])        # B2A   : bt-11 Only : Response to press power button
+CMD_RESET_BUTTON_REQ = bytearray([0x08])        # A2B   : bt-11 Only : press reset button
+CMD_RESET_BUTTON_RES = bytearray([0x88])        # B2A   : bt-11 Only : Response to press reset button
+CMD_TEMPERATURE_REQ = bytearray([0x09])         # A2B   : bt-11 Only : read temperature
+CMD_TEMPERATURE_RES = bytearray([0x89])         # B2A   : bt-11 Only : Response to read temperature
 CMD_NOP = bytearray([0x00])                 # A2B   : Just test Tx
 CMD_NOP_RES = bytearray([0x80])             # B2A   : Received NOP (test Rx)
 CMD_UNKNOWN_RES = bytearray([0xFF])         # B2A/A2B   : Received unknown command
@@ -62,7 +70,11 @@ loggingFileName = '/home/nvidia/bt-11/BT-log'
 formatter = '%(asctime)s : %(levelname)s : %(message)s'
 
 # HEART BEAT timer (5 min. period)
-HB_TIME_PERIOD = 300            # 5 min. = 5x60 sec.
+HEARTBEAT_TIME_PERIOD = 300            # 5 min. = 5x60 sec.
+HEARTBEAT_PERIOD = 4                   # for heartbeat period command : 4 = 5 min.
+
+# Power Off time (30 sec.)
+POWEROFF_TIME = 0               # for poweroff time command : 0 = 30 sec.
 
 # ping time out = 5 min. x 4 times
 PING_TIME_OUT = 300             # should be 300
@@ -271,6 +283,7 @@ class BtComm(object):
 
     # Send Data
     def send(self, data):
+        # here, argument data = command +  parameter bytearray
         # check sum
         self.sendbytesnoescape.clear()
         num_sum = 0
@@ -370,7 +383,7 @@ class BtComm(object):
         logging.debug("send BT11 log request")
         print(str(datetime.datetime.now()) + " Read Logs starts")
         while True:
-            result = BtComm.send(self, CMD_LOG_REQ)
+            result = self.send(CMD_LOG_REQ)
             if not result:
                 logging.debug("log request failed")
                 break
@@ -400,7 +413,7 @@ class BtComm(object):
     # cold boot request
     def coldboot(self):
         logging.debug("send cold reboot request")
-        result = BtComm.send(self, CMD_REBOOT_REQ)
+        result = self.send(CMD_REBOOT_REQ)
         if not result:
             return
         else:
@@ -411,6 +424,44 @@ class BtComm(object):
             else:
                 logging.debug("not received coldBoot response")
                 print("not received coldBoot response")
+        return
+
+    def heartbeat_period(self):
+        logging.debug("send heartbeat period request")
+
+        hb_period = bytearray()
+        hb_period.append(0x06)
+        hb_period.append(HEARTBEAT_PERIOD)
+        result = self.send(hb_period)
+        if not result:
+            return
+        else:
+            result, rxdata, rxcommand, rxparameter = self.recv(30.0)
+            if result:
+                logging.debug("received heartbeat period response")
+                print("received heartbeat period response")
+            else:
+                logging.debug("not received heartbeat period response")
+                print("not received heartbeat period response")
+        return
+
+    def poweroff_time(self):
+        logging.debug("send power off time request")
+
+        powerofftime = bytearray()
+        powerofftime.append(0x05)
+        powerofftime.append(POWEROFF_TIME)
+        result = self.send(powerofftime)
+        if not result:
+            return
+        else:
+            result, rxdata, rxcommand, rxparameter = self.recv(30.0)
+            if result:
+                logging.debug("received power off time response")
+                print("received power off time response")
+            else:
+                logging.debug("not received power off time response")
+                print("not received power off time response")
         return
 
 
@@ -513,6 +564,12 @@ def main():
                 strlog = "Start Shift Process from WAIT4BT11 to HEARTBEAT"
                 writelog(strlog)
 
+                # set heartbeat period to 5 min.
+                btcom.heartbeat_period()
+
+                # set power off time to 30 sec.
+                btcom.poweroff_time()
+
                 # read BT-11 status
                 logging.debug("send status request")
                 result = btcom.send(CMD_STATUS_REQ)
@@ -554,7 +611,7 @@ def main():
                 # DEBUG
                 # print("start heart beat timing check")
                 hb_time_end = time.time()
-                if hb_time_end - hb_time_start > float(HB_TIME_PERIOD):
+                if hb_time_end - hb_time_start > float(HEARTBEAT_TIME_PERIOD):
                     # HEART BEAT process
                     # DEBUG
                     print('Send HEARTBEAT')

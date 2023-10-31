@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import sys
+import time
 
 import tkinter as tk
 from tkinter.font import Font
@@ -69,7 +71,7 @@ class TestConsole(tk.Frame):
         # GUI Setting
         #
         self.__button_alive_req_text = tk.StringVar()
-        self.__button_alive_req_text.set("heartbeat off")
+        self.__button_alive_req_text.set("heartbeat on")
         self.__heartbeat_status = False
         self.__heartbeat_count = 0
 
@@ -106,6 +108,9 @@ class TestConsole(tk.Frame):
 
         self.__button_nop_text = tk.StringVar()
         self.__button_nop_text.set("send")
+
+        self.__button_quit_text = tk.StringVar()
+        self.__button_quit_text.set("QUIT Test Console")
 
         # Tx Data frame
         __frameTx = tk.LabelFrame(master, text="Tx Data (hex)")
@@ -146,7 +151,7 @@ class TestConsole(tk.Frame):
         __button_alive_req = tk.Button(__frameCommands, textvariable=self.__button_alive_req_text,
                                        command=self.cmd_alive_req)
         __button_alive_req.grid(row=0, column=1, sticky=tk.E)
-        __label_alive_req_comment = tk.Label(__frameCommands, text="Must send alive_req first to ARMM.")
+        __label_alive_req_comment = tk.Label(__frameCommands, text="  Must send alive_req first to ARMM.", foreground="#ff0000")
         __label_alive_req_comment.grid(row=0, column=3, sticky=tk.W)
 
         # status request
@@ -162,7 +167,7 @@ class TestConsole(tk.Frame):
         __button_alive_req = tk.Button(__frameCommands, textvariable=self.__button_time_sync_req_text,
                                        command=self.cmd_time_sync_req)
         __button_alive_req.grid(row=2, column=1, sticky=tk.E)
-        __label_alive_req_comment = tk.Label(__frameCommands, text="Sync ARMM time with this machine time.")
+        __label_alive_req_comment = tk.Label(__frameCommands, text="  Sync ARMM time with this machine time.")
         __label_alive_req_comment.grid(row=2, column=3, sticky=tk.W)
 
         # log request
@@ -187,8 +192,8 @@ class TestConsole(tk.Frame):
         __button_poweroff_time_req.grid(row=5, column=1, sticky=tk.E)
         __entry_poweroff_time = tk.Entry(__frameCommands, width=2, textvariable=self.entry_poweroff_time)
         __entry_poweroff_time.grid(row=5, column=2, sticky=tk.E, padx=1)
-        # __label_poweroff_time = tk.Label(__frameCommands, text="00:30seconds, 01-FF:1-255seconds")
-        # __label_poweroff_time.grid(row=5, column=3, sticky=tk.E)
+        __label_poweroff_time = tk.Label(__frameCommands, text="  Hex Value Input > 00:30 sec., 01-FF:1-255 min.")
+        __label_poweroff_time.grid(row=5, column=3, sticky=tk.W)
 
         # heart beat period request
         __label_heartbeat_period_req = tk.Label(__frameCommands, text="heartbeat_period_req")
@@ -199,6 +204,9 @@ class TestConsole(tk.Frame):
         __button_heartbeat_period_req.grid(row=6, column=1, sticky=tk.E)
         self.entry_heartbeat_period = tk.Entry(__frameCommands, width=2, textvariable=self.__entry_heartbeat_period)
         self.entry_heartbeat_period.grid(row=6, column=2, sticky=tk.E, padx=1)
+        __label_heartbeat_period = tk.Label(__frameCommands, text="  Hex Value Input > 00-FF:1 min.-256 min.")
+        __label_heartbeat_period.grid(row=6, column=3, sticky=tk.W)
+
 
         # power button request
         __label_power_button_req = tk.Label(__frameCommands, text="power_button_req")
@@ -244,6 +252,10 @@ class TestConsole(tk.Frame):
         self.textBoxDebug.insert(tk.END, 'Debug Messages are here\n')
         # self.textBoxDebug.configure(state='disabled')
 
+        # Quit this program
+        __button_quit = tk.Button(master, textvariable=self.__button_quit_text, command=self.quitprogram)
+        __button_quit.pack(anchor="e", fill="x", expand=True, padx=10, pady=10)
+
         #
         # set Serial Communication
         #  Orin NX/Nano tty serial port
@@ -255,7 +267,7 @@ class TestConsole(tk.Frame):
         # __serialBaudRate = BAUDRATE
 
         # open port
-        self.bt_communication = BtComm(tty=self.ttySerialPort, baudrate=self.serialBaudRate)
+        self.bt_communication = BtComm(tty=self.ttySerialPort, baudratevalue=self.serialBaudRate)
 
         # print("Opened serial port")
         self.write_debug("Opened serial port")
@@ -266,11 +278,12 @@ class TestConsole(tk.Frame):
 
         if self.__heartbeat_status:
             self.__heartbeat_status = False
-            self.__button_alive_req_text.set("heartbeat off")
+            self.__button_alive_req_text.set("heartbeat on")
+            self.heartbeat()
 
         else:
             self.__heartbeat_status = True
-            self.__button_alive_req_text.set("heartbeat on")
+            self.__button_alive_req_text.set("heartbeat off")
             #
             # calculate period
             __heartbeat_count = 0
@@ -298,7 +311,11 @@ class TestConsole(tk.Frame):
             self.write_rxdata(rxdata.hex())
             self.heartbeat_millisecond = (self.heartbeat_period + 1) * 60 * 1000
             self.write_debug("heartbeat_millisecond = " + str(self.heartbeat_millisecond))
-            self.master.after(self.heartbeat_millisecond, self.heartbeat)
+            self.__heartbeat_id = self.master.after(self.heartbeat_millisecond, self.heartbeat)
+
+        else:
+            self.master.after_cancel(self.__heartbeat_id)
+
 
     def cmd_status_req(self):
         self.write_debug("status_req")
@@ -370,11 +387,12 @@ class TestConsole(tk.Frame):
 
     def cmd_poweroff_time_req(self):
         self.write_debug("poweroff_time_req")
-        # generate heartbeat period parameters
+        # generate power off time parameters
         pf_data = bytearray()
         pf_data.append(0x05)  # power off time command
-        self.poweroff_time = int(self.entry_poweroff_time.get())
-        pf_data.append(self.heartbeat_period)
+        self.inputvalue = eval("0x"+ self.entry_poweroff_time.get())
+        self.poweroff_time = self.inputvalue
+        pf_data.append(self.poweroff_time)
 
         txresult, txdata = self.bt_communication.send(pf_data)
 
@@ -382,6 +400,12 @@ class TestConsole(tk.Frame):
             self.write_txdata(txdata.hex())
             rx_result, rxdata = self.bt_communication.recv(15)
             self.write_rxdata(rxdata.hex())
+
+            if self.poweroff_time == 0:
+                print("Power Off time is 30 sec.")
+            else:
+                print("Power Off time is ", self.poweroff_time, " min.")
+
         else:
             self.write_debug("poweroff_time_req send error")
 
@@ -390,7 +414,8 @@ class TestConsole(tk.Frame):
         # generate heartbeat period parameters
         hb_data = bytearray()
         hb_data.append(0x06)        # heartbeat period command
-        self.heartbeat_period = int(self.entry_heartbeat_period.get())
+        self.inputvalue = eval("0x"+self.entry_heartbeat_period.get())
+        self.heartbeat_period = self.inputvalue
         hb_data.append(self.heartbeat_period)
 
         txresult, txdata = self.bt_communication.send(hb_data)
@@ -399,6 +424,8 @@ class TestConsole(tk.Frame):
             self.write_txdata(txdata.hex())
             rx_result, rxdata = self.bt_communication.recv(15)
             self.write_rxdata(rxdata.hex())
+
+            print("New heartbeat period = ", self.heartbeat_period+1, " min.")
         else:
             self.write_debug("heartbeat_period_req send error")
 
@@ -450,6 +477,15 @@ class TestConsole(tk.Frame):
             # self.write_rxdata(rxdata.hex())
         else:
             self.write_debug("nop send error")
+
+    def quitprogram(self):
+        self.write_debug("quit this program after close serial port")
+
+        self.bt_communication.close()
+        # just sleep before exit()
+        time.sleep(1)
+
+        sys.exit()
 
     def write_txdata(self, tx_message):
         # self.textBoxTx.configure(state='normal')

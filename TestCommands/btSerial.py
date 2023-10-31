@@ -2,6 +2,7 @@
 
 import time
 import threading
+import sys
 
 import serial
 
@@ -23,7 +24,7 @@ HB_TIME_PERIOD = 300  # should be 300
 # AI BOX Serial Communication Class to BT-01/11
 #
 class BtComm(object):
-    def __init__(self, tty, baudratevalue=1200, timeoutvalue=10.0):
+    def __init__(self, tty, baudratevalue=1200, timeoutvalue=30.0):
         # port open flag
         self.isPortOpen = False
         # Rx
@@ -39,8 +40,11 @@ class BtComm(object):
         self.event = threading.Event()
 
         # Open Serial Port. wait til success
+        self.trycount = 0
         while True:
+            print("try to open serial port 10 times.")
             try:
+                self.trycount += 1
                 self.comm = serial.Serial(
                     port=tty,
                     baudrate=baudratevalue,
@@ -50,11 +54,15 @@ class BtComm(object):
                     timeout=timeoutvalue
                     )
                 self.isPortOpen = True              # opened successfully
+                print("Serial port opened successfully.")
                 break
             except serial.SerialException:
                 self.isPortOpen = False             # failed
-                # not break until success
-                # break
+                print("failed to open serial port.  Retry.")
+                if self.trycount == 10 :
+                    print("Can't open serial port. Please reboot system.")
+                    sys.exit()
+                
 
         return
 
@@ -186,6 +194,5 @@ class BtComm(object):
     # Close Serial Port
     def close(self):
         self.stop()
-        if self.isPortOpen:
-            self.comm.close()
-        self.isPortOpen = False
+        self.comm.close()
+        
