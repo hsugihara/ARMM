@@ -14,7 +14,7 @@ import serial
 
 # version description
 # described at logging.info at the beginning
-VERSIONDESCRIPTION = 'version 2023/10/31 : no STATE_BT_DEAD, heartbeat = every 5min.'
+VERSIONDESCRIPTION = 'version 2023/11/16 : no STATE_BT_DEAD, heartbeat = every 5min.'
 
 # State
 STATE_POWERON = 0       # Power on
@@ -69,9 +69,17 @@ BAUDRATE = 1200                 # Serial Port Baud Rate : 1200 because of keepin
 loggingFileName = '/home/nvidia/bt-11/BT-log'
 formatter = '%(asctime)s : %(levelname)s : %(message)s'
 
-# HEART BEAT timer (5 min. period)
+#
+# HEART BEAT parameters (set to 5 min. period)
+#
+# Heartbeat Period for this program (host side)
 HEARTBEAT_TIME_PERIOD = 300            # 5 min. = 5x60 sec.
-HEARTBEAT_PERIOD = 4                   # for heartbeat period command : 4 = 5 min.
+# Heartbeat Period for ARMM
+# Set the period to double of host period + 2 min. = 12 min.
+#    double is for recovering a case of one communication error happened
+#    2 min. is for recovering time error (margin) between host and ARMM
+#
+HEARTBEAT_PERIOD = 11       # 12 min.
 
 # Power Off time (30 sec.)
 POWEROFF_TIME = 0               # for poweroff time command : 0 = 30 sec.
@@ -434,7 +442,7 @@ class BtComm(object):
         hb_period.append(HEARTBEAT_PERIOD)
         result = self.send(hb_period)
         if not result:
-            return
+                 return
         else:
             result, rxdata, rxcommand, rxparameter = self.recv(30.0)
             if result:
@@ -611,7 +619,7 @@ def main():
                 # DEBUG
                 # print("start heart beat timing check")
                 hb_time_end = time.time()
-                if hb_time_end - hb_time_start > float(HEARTBEAT_TIME_PERIOD):
+                if hb_time_end - hb_time_start > HEARTBEAT_TIME_PERIOD:
                     # HEART BEAT process
                     # DEBUG
                     print('Send HEARTBEAT')
@@ -661,7 +669,7 @@ def main():
                 #   After receiving reboot_res, start shutdown
                 #
                 ping_time_end = time.time()
-                if ping_time_end - ping_time_start > float(PING_TIME_OUT):
+                if ping_time_end - ping_time_start > PING_TIME_OUT:
                     # execute ping
                     # DEBUG
                     print("Start ping")
