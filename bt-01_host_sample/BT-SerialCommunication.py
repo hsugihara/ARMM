@@ -615,7 +615,7 @@ def main():
                                 # if received, execute shutdown
                                 # if not, maybe can do something
                                 # but ANYWAY shutdown
-                                os.system('shutdown -s')
+                                os.system('shutdown -h now')
 
                             else:
                                 ping_time_start = time.time()
