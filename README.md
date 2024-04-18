@@ -4,7 +4,7 @@
 
 ## ARMM概要
 
-ARMMは32ビットMCUを内蔵した超小型ボードで、EDGEMATRIX Inc.が開発しました。Edge AI BOX内のJetson moduleとシリアル通信を介してheat beatや各種コマンドのやりとりを行います。
+ARMMは32ビットMCUを内蔵した超小型ボードで、EDGEMATRIX Inc.が開発しました。Edge AI BOX内のJetson moduleとシリアル通信を介してheart beatや各種コマンドのやりとりを行います。
 また、Edge AI BOXの主電源を監視したりON/OFFできる機能を持っており、Edge AI BOXの異常を検出した場合に主電源を入れ直すことで異常状態からの回復を試みることが可能です。ARMMにより、停止しないサービスが可能となります。
 
 ARMMボードは本体側のARMMアプリケーションと連携して動作することを前提としています。ここでは本体側のARMMアプリケーションについて説明します。
